@@ -1,23 +1,18 @@
 package com.sportheads.tom.sportheads;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 
-import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,10 +21,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Iterator;
 
 
 public class BaseActivity extends ActionBarActivity
@@ -38,15 +30,20 @@ public class BaseActivity extends ActionBarActivity
     private static Boolean isFirstTimeCreated = true;
     private static Integer numOfRequests = 0;
     private static boolean downloading = true;
+    private static boolean hasMoreItems = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_base);
 
+        // Setting a listener for the endless scrolling of the main ListView
         ((ListView) findViewById(R.id.list)).setOnScrollListener(new ItemScrollListener());
 
+        // Checks if the activity is created for the first time, so i won't load items every
+        // orientation change/etc..
         if (isFirstTimeCreated) {
+            // Getting items and sets them in the main ListView
             new GetHeads().execute("get_heads", numOfRequests.toString());
             isFirstTimeCreated = false;
         }
@@ -81,34 +78,41 @@ public class BaseActivity extends ActionBarActivity
 
     private class GetHeads extends AsyncTask<String, Void, JSONArray> {
 
-        //private ProgressDialog progressDialog;
+        ListView list = (ListView) findViewById(R.id.list);
+
+        // Removes the loading circle for footer and puts the "no more items" TextView
+        LayoutInflater inflater = (LayoutInflater) getApplicationContext().
+                getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        RelativeLayout rl = (RelativeLayout) inflater.inflate(R.layout.loading_panel,
+                (ViewGroup) findViewById(R.id.list),
+                false);
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
 
-            if (ItemsContent.ITEMS.isEmpty()) {
+            // Checks if it's the first time this task is called, so it'll show the
+            // central progress circle
+            if (numOfRequests == 0) {
                 findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-            }
-            else {
-//                findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-                RelativeLayout rl;// = (RelativeLayout) findViewById(R.id.progress_bar_footer);
-//                rl.setHorizontalGravity(Gravity.CENTER);
-//                rl.setVerticalGravity(Gravity.BOTTOM);
-                LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                rl = (RelativeLayout) inflater.inflate(R.layout.loading_panel, (ViewGroup) findViewById(R.id.list), false);
-                ((ListView) findViewById(R.id.list)).addFooterView(rl);
             }
         }
 
         @Override
         protected JSONArray doInBackground(String... params) {
+
+            // Currently downloading - so this task won't be called again when already downloading
             downloading = true;
+
+            //////////////// JUST FOR DEBUG PURPOSES!!!!! ////////////////
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            //////////////// JUST FOR DEBUG PURPOSES!!!!! ////////////////
+
+            // Sending the post request, get the items in the form of JSON
             String heads = sendPost(params[0], params[1]);
 
             try {
@@ -122,10 +126,15 @@ public class BaseActivity extends ActionBarActivity
 
         @Override
         protected void onPostExecute(JSONArray result) {
+
+            // Parsing the JSON, creating Items for each JSON row
             for (int index = 0; index < result.length(); index ++) {
                 JSONObject currItem;
+
                 try {
                     currItem = result.getJSONObject(index);
+
+                    // Adds the item to the main list
                     ItemsContent.addItem(currItem.getInt("item_guid"),
                             currItem.getString("item_title"),
                             currItem.getString("item_desc"),
@@ -138,15 +147,37 @@ public class BaseActivity extends ActionBarActivity
                 }
             }
 
-            if (((ListView) findViewById(R.id.list)).getFooterViewsCount() != 0) {
-                ((ListView) findViewById(R.id.list)).
-                        removeFooterView(findViewById(R.id.progress_bar_footer));
+            // Getting the list adapter so it'll notify the changes and update the list
+            ItemListFragment listFragment = (ItemListFragment) getFragmentManager().
+                                                    findFragmentById(R.id.items_list_fragment);
+            listFragment.getAdapter().notifyDataSetChanged();
+
+            // If it's the first item download just finished - remove the central loading cirecle
+            // and put a loading circle at the footer of the list
+            if (numOfRequests == 0) {
+                // Removes the central loading cirecle
+                findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+
+                // Puts a loading circle at the footer of the list
+                list.addFooterView(rl, null, false);
+            }
+            else if (result.length() == 0) {
+                hasMoreItems = false;
+
+                // Removes the loading circle for footer and puts the "no more items" TextView
+                list.removeFooterView(findViewById(R.id.progress_bar_footer));
+
+                // Adds the no_more_items label to list footer
+                RelativeLayout textLayout = (RelativeLayout) inflater.inflate(R.layout.no_more_items_layout,
+                                                       (ViewGroup) findViewById(R.id.list),
+                                                       false);
+
+                list.addFooterView(textLayout, null, false);
             }
 
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-            ItemListFragment f = (ItemListFragment) getFragmentManager().findFragmentById(R.id.items_list_fragment);
-            f.getAdapter().notifyDataSetChanged();
             numOfRequests++;
+
+            // Finished downloading - it can start this task again
             downloading = false;
         }
 
@@ -200,16 +231,22 @@ public class BaseActivity extends ActionBarActivity
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem,
                              int visibleItemCount, int totalItemCount) {
+            // If it was previously loading
             if (loading) {
+                // Is it not currently downloading and the total item count is bigger than before
                 if (totalItemCount > previousTotal && !downloading) {
                     loading = false;
+
+                    // Obviously it's not loading anymore
                     previousTotal = totalItemCount;
                 }
             }
-            //if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleItemCount)) {
-            if (!loading && (firstVisibleItem + visibleItemCount) >= (totalItemCount - 1)) {
-                // I load the next page of gigs using a background task,
-                // but you can call any function here.
+
+            // If it's not currently loading and the one before last item is visible
+            if (!loading &&
+                hasMoreItems &&
+                (firstVisibleItem + visibleItemCount) >= (totalItemCount - 1)) {
+                // get new items from server
                 new GetHeads().execute("get_heads", numOfRequests.toString());
                 loading = true;
             }
