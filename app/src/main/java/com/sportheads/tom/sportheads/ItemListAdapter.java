@@ -1,7 +1,6 @@
 package com.sportheads.tom.sportheads;
 
 import android.content.Context;
-import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,11 +26,14 @@ public class ItemListAdapter extends ArrayAdapter<ItemsContent.Item> {
             convertView = inflater.inflate(R.layout.item_layout, parent, false);
         }
 
-        ((TextView) (convertView.findViewById(R.id.item_card).findViewById(R.id.item_title)))
+        ((TextView) (convertView.findViewById(R.id.item_title)))
                 .setText(ItemsContent.ITEMS.get(position).getmTitle());
 
-        ((TextView) (convertView.findViewById(R.id.item_card).findViewById(R.id.item_desc)))
+        ((TextView) (convertView.findViewById(R.id.item_desc)))
                 .setText(ItemsContent.ITEMS.get(position).getmDesc());
+
+        ((TextView) (convertView.findViewById(R.id.item_date)))
+                .setText(ItemsContent.ITEMS.get(position).getmPubDate());
 
         return convertView;
     }

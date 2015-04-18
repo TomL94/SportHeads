@@ -2,6 +2,7 @@ package com.sportheads.tom.sportheads;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -31,6 +32,7 @@ public class BaseActivity extends ActionBarActivity
     private static Integer numOfRequests = 0;
     private static boolean downloading = true;
     private static boolean hasMoreItems = true;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,12 +42,14 @@ public class BaseActivity extends ActionBarActivity
         // Setting a listener for the endless scrolling of the main ListView
         ((ListView) findViewById(R.id.list)).setOnScrollListener(new ItemScrollListener());
 
+        mSwipeRefreshLayout = ((SwipeRefreshLayout) findViewById(R.id.swipe_refresh_item_list));
+        mSwipeRefreshLayout.setOnRefreshListener(new ItemListRefreshListener());
+
         // Checks if the activity is created for the first time, so i won't load items every
         // orientation change/etc..
         if (isFirstTimeCreated) {
             // Getting items and sets them in the main ListView
             new GetHeads().execute("get_heads", numOfRequests.toString());
-            isFirstTimeCreated = false;
         }
     }
 
@@ -76,6 +80,17 @@ public class BaseActivity extends ActionBarActivity
 
     }
 
+    public void resetAll() {
+        numOfRequests = 0;
+        downloading = true;
+        hasMoreItems = true;
+        ((ListView) findViewById(R.id.list)).setOnScrollListener(new ItemScrollListener());
+        ItemsContent.eraseAll();
+        ItemListFragment listFragment = (ItemListFragment) getFragmentManager().
+                findFragmentById(R.id.items_list_fragment);
+        listFragment.getAdapter().notifyDataSetChanged();
+    }
+
     private class GetHeads extends AsyncTask<String, Void, JSONArray> {
 
         ListView list = (ListView) findViewById(R.id.list);
@@ -91,10 +106,15 @@ public class BaseActivity extends ActionBarActivity
         protected void onPreExecute() {
             super.onPreExecute();
 
+            mSwipeRefreshLayout.setEnabled(false);
+
             // Checks if it's the first time this task is called, so it'll show the
             // central progress circle
-            if (numOfRequests == 0) {
+            if (isFirstTimeCreated) {
                 findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+            }
+            else if(!ItemsContent.ITEMS.isEmpty()) {
+                findViewById(R.id.progress_bar_footer).findViewById(R.id.prog_bar).setVisibility(View.VISIBLE);
             }
         }
 
@@ -105,11 +125,11 @@ public class BaseActivity extends ActionBarActivity
             downloading = true;
 
             //////////////// JUST FOR DEBUG PURPOSES!!!!! ////////////////
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             //////////////// JUST FOR DEBUG PURPOSES!!!!! ////////////////
 
             // Sending the post request, get the items in the form of JSON
@@ -154,12 +174,13 @@ public class BaseActivity extends ActionBarActivity
 
             // If it's the first item download just finished - remove the central loading cirecle
             // and put a loading circle at the footer of the list
-            if (numOfRequests == 0) {
-                // Removes the central loading cirecle
+            if (isFirstTimeCreated) {
+                // Removes the central loading circle
                 findViewById(R.id.loadingPanel).setVisibility(View.GONE);
 
                 // Puts a loading circle at the footer of the list
                 list.addFooterView(rl, null, false);
+                isFirstTimeCreated = false;
             }
             else if (result.length() == 0) {
                 hasMoreItems = false;
@@ -179,12 +200,15 @@ public class BaseActivity extends ActionBarActivity
 
             // Finished downloading - it can start this task again
             downloading = false;
+
+            mSwipeRefreshLayout.setRefreshing(false);
+            mSwipeRefreshLayout.setEnabled(true);
         }
 
         private String sendPost(String param, String numOfRequests) {
             try {
                 // Opening a connection
-                URL url = new URL("http://sportheads.ddns.net/SportheadsService.php");
+                URL url = new URL("http://10.0.0.5/SportheadsService.php");
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
                 // Adding request header
@@ -235,9 +259,9 @@ public class BaseActivity extends ActionBarActivity
             if (loading) {
                 // Is it not currently downloading and the total item count is bigger than before
                 if (totalItemCount > previousTotal && !downloading) {
+                    // Obviously it's not loading anymore
                     loading = false;
 
-                    // Obviously it's not loading anymore
                     previousTotal = totalItemCount;
                 }
             }
@@ -254,6 +278,16 @@ public class BaseActivity extends ActionBarActivity
 
         @Override
         public void onScrollStateChanged(AbsListView view, int scrollState) {
+        }
+    }
+
+    private class ItemListRefreshListener implements SwipeRefreshLayout.OnRefreshListener {
+
+        @Override
+        public void onRefresh() {
+            findViewById(R.id.progress_bar_footer).findViewById(R.id.prog_bar).setVisibility(View.GONE);
+            resetAll();
+            new GetHeads().execute("get_heads", numOfRequests.toString());
         }
     }
 }
