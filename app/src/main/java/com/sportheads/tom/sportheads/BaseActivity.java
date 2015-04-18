@@ -14,6 +14,12 @@ import android.widget.AbsListView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,6 +57,15 @@ public class BaseActivity extends ActionBarActivity
             // Getting items and sets them in the main ListView
             new GetHeads().execute("get_heads", numOfRequests.toString());
         }
+
+        DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder().
+                cacheInMemory(true).
+                imageScaleType(ImageScaleType.EXACTLY_STRETCHED).
+                showImageOnLoading(R.mipmap.trans_block).
+                displayer(new FadeInBitmapDisplayer(600)).build();
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).
+                                            defaultDisplayImageOptions(defaultOptions).build();
+        ImageLoader.getInstance().init(config);
     }
 
     @Override

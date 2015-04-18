@@ -5,7 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.List;
 
@@ -34,6 +37,12 @@ public class ItemListAdapter extends ArrayAdapter<ItemsContent.Item> {
 
         ((TextView) (convertView.findViewById(R.id.item_date)))
                 .setText(ItemsContent.ITEMS.get(position).getmPubDate());
+
+        ImageLoader.getInstance().displayImage(ItemsContent.ITEMS.get(position).getmImageLink(),
+                (ImageView) (convertView.findViewById(R.id.item_image)));
+
+        ((TextView) (convertView.findViewById(R.id.item_image_desc)))
+                .setText(ItemsContent.ITEMS.get(position).getmImageDesc());
 
         return convertView;
     }
