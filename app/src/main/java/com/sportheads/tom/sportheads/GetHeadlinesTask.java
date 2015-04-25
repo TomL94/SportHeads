@@ -18,11 +18,11 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
 
     // <editor-fold desc="Final Members">
 
-    private final String SERVICE_URL = "http://10.0.0.5/SportheadsService.php";
-    private final String REQ_METHOD = "POST";
-    private final String ACCEPT_LANG = "en-US,en;q=0.8,he;q=0.6";
-    private final String CONTENT_TYPE = "application/x-www-form-urlencoded";
-    private final String SERVICE_NAME_PARAM = "serv";
+    private final String SERVICE_URL              = "http://sportheads.ddns.net/SportheadsService.php";
+    private final String REQ_METHOD               = "POST";
+    private final String ACCEPT_LANG              = "en-US,en;q=0.8,he;q=0.6";
+    private final String CONTENT_TYPE             = "application/x-www-form-urlencoded";
+    private final String SERVICE_NAME_PARAM       = "serv";
     private final String SERVICE_NUM_OF_REQ_PARAM = "nor";
 
     // </editor-fold>
@@ -57,7 +57,13 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
     protected JSONArray doInBackground(String... params) {
         // Getting the headlines from the web service
         String jsonHeads = sendPost(params[0], params[1]);
-
+        ////////////////////////////////////FOR DEBUG///////////////////////////////////////////////
+//        try {
+//            Thread.sleep(3000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+        ////////////////////////////////////FOR DEBUG///////////////////////////////////////////////
         try {
             return new JSONArray(jsonHeads);
         } catch (JSONException e) {

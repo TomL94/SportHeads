@@ -24,21 +24,15 @@ public class BaseActivity extends ActionBarActivity
 
     // </editor-fold>
 
-    // <editor-fold desc="Ctors">
-
-    public BaseActivity() {
-        mFragment = findViewById(R.id.items_list_fragment);
-        mProgressBar = findViewById(R.id.loading_panel);
-    }
-
-    // </editor-fold>
-
     // <editor-fold desc="Class Methods">
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_base);
+
+        mFragment = findViewById(R.id.items_list_fragment);
+        mProgressBar = findViewById(R.id.loading_panel);
 
         if (ItemsContent.ITEMS.isEmpty()) {
             mFragment.setVisibility(View.GONE);

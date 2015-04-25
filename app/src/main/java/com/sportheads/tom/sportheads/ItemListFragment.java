@@ -82,10 +82,6 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 
         mAdapter = new ItemListAdapter(getActivity(), R.layout.item_layout, ItemsContent.ITEMS);
 
-        initSwipeRefreshLayout();
-
-        initEndlessScrolling();
-
         // Retain this fragment across configuration changes
         setRetainInstance(true);
     }
@@ -107,6 +103,10 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
+
+        initSwipeRefreshLayout();
+
+        initEndlessScrolling();
 
         return mFragmentView;
     }
@@ -212,12 +212,21 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
         // Refreshing the ListView
         mAdapter.notifyDataSetChanged();
 
-        // Checks if the list is currently refreshing
-        if (mSwipeRefreshLayout.isRefreshing()) {
-            // Returns the SwipeToRefresh back to normal
-            // (stops refreshing animation and enabling refresh triggering)
-            mSwipeRefreshLayout.setRefreshing(false);
+        // Checking if swipe to refresh is currently enabled
+        if (!mSwipeRefreshLayout.isEnabled()) {
+            // Enabling back the swipe to refresh function
             mSwipeRefreshLayout.setEnabled(true);
+
+            // Checks if the list is currently refreshing
+            if (mSwipeRefreshLayout.isRefreshing()) {
+                // Returns the SwipeToRefresh back to normal (enabling refresh triggering)
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+        }
+
+        // Checks if the list is visible
+        if (mListView.getVisibility() == View.GONE) {
+            mListView.setVisibility(View.VISIBLE);
         }
 
         mCallback.onDownloadFinish();
@@ -259,8 +268,16 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 
         @Override
         public void onRefresh() {
-            mHeadsDownloader.getNextHeadlines();
+            resetAll();
+            mListView.setVisibility(View.GONE);
+            //mHeadsDownloader.getNextHeadlines();
+            //mAdapter.notifyDataSetChanged();
         }
+    }
+
+    private void resetAll() {
+        mHeadsDownloader.reset();
+        ItemsContent.eraseAll();
     }
 
     // </editor-fold>
@@ -276,7 +293,7 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
             // downloading and if it's still got more headlines to download
             if ((firstVisibleItem + visibleItemCount) >= (totalItemCount - 1) &&
                     !mCurrentlyDownloading &&
-                    !mGotMoreHeads) {
+                    mGotMoreHeads) {
                 // Downloading more headlines
                 mHeadsDownloader.getNextHeadlines();
             }

@@ -47,5 +47,9 @@ public class HeadlineDownloader {
         mNumOfRequests++;
     }
 
+    public void reset() {
+        mNumOfRequests = 0;
+    }
+
     // </editor-fold>
 }
