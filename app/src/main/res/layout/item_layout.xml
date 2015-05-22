@@ -4,18 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/abc_control_padding_material">
-
-    <!--<android.support.v7.widget.CardView android:id="@+id/item_card"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:layout_margin="@dimen/activity_horizontal_margin"-->
-        <!--app:contentPadding="@dimen/abc_button_padding_horizontal_material" >-->
-
-        <!--<LinearLayout-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:orientation="vertical">-->
+    android:padding="15dp">
 
     <TextView android:id="@+id/item_title"
         style="@style/ItemTitle"/>
@@ -32,9 +21,5 @@
 
     <TextView android:id="@+id/item_date"
         style="@style/ItemDate" />
-
-        <!--</LinearLayout>-->
-
-    <!--</android.support.v7.widget.CardView>-->
 
 </LinearLayout>

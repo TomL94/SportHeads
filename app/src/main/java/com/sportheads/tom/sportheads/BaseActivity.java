@@ -1,5 +1,7 @@
 package com.sportheads.tom.sportheads;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -80,7 +82,10 @@ public class BaseActivity extends ActionBarActivity
 
     @Override
     public void onFragmentInteraction(String id) {
-
+        Intent goToArticleIntent = new Intent(this, ArticleActivity.class);
+        ItemsContent.Item selectedItem = ItemsContent.ITEM_MAP.get(Integer.parseInt(id));
+        goToArticleIntent.putExtra("tom", "http://m.one.co.il/iPhone/Articles/Article.aspx?id=" + selectedItem.getmGuid());
+        startActivity(goToArticleIntent);
     }
 
     // </editor-fold>
