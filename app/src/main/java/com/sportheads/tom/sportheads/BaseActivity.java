@@ -1,52 +1,46 @@
 package com.sportheads.tom.sportheads;
 
-import android.content.Context;
-import android.os.AsyncTask;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 
 
 public class BaseActivity extends ActionBarActivity
-                          implements ItemListFragment.OnFragmentInteractionListener{
+                          implements ItemListFragment.OnFragmentInteractionListener,
+                                     ItemListFragment.HeadlinesFragmentCallback {
 
-    private static Boolean isFirstTimeCreated = true;
-    private static Integer numOfRequests = 0;
-    private static boolean downloading = true;
-    private static boolean hasMoreItems = true;
+    // <editor-fold desc="Data Members">
+
+    private View mFragment;
+    private View mProgressBar;
+
+    // </editor-fold>
+
+    // <editor-fold desc="Class Methods">
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_base);
 
-        // Setting a listener for the endless scrolling of the main ListView
-        ((ListView) findViewById(R.id.list)).setOnScrollListener(new ItemScrollListener());
+        mFragment = findViewById(R.id.items_list_fragment);
+        mProgressBar = findViewById(R.id.loading_panel);
 
-        // Checks if the activity is created for the first time, so i won't load items every
-        // orientation change/etc..
-        if (isFirstTimeCreated) {
-            // Getting items and sets them in the main ListView
-            new GetHeads().execute("get_heads", numOfRequests.toString());
-            isFirstTimeCreated = false;
+        if (ItemsContent.ITEMS.isEmpty()) {
+            mFragment.setVisibility(View.GONE);
         }
+
+        initImageLoader();
     }
 
     @Override
@@ -71,189 +65,44 @@ public class BaseActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
+    private void initImageLoader() {
+        DisplayImageOptions displayOptions = new DisplayImageOptions.Builder().
+                cacheInMemory(true).
+                imageScaleType(ImageScaleType.EXACTLY_STRETCHED).
+                showImageOnLoading(R.mipmap.trans_block).
+                displayer(new FadeInBitmapDisplayer(600)).build();
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).
+                defaultDisplayImageOptions(displayOptions).build();
+        ImageLoader.getInstance().init(config);
+    }
+
+    // </editor-fold>
+
+    // <editor-fold desc="FragmentInteractionListener Methods"
+
     @Override
     public void onFragmentInteraction(String id) {
-
+        Intent goToArticleIntent = new Intent(this, ArticleActivity.class);
+        ItemsContent.Item selectedItem = ItemsContent.ITEM_MAP.get(Integer.parseInt(id));
+        goToArticleIntent.putExtra("tom", "http://m.one.co.il/iPhone/Articles/Article.aspx?id=" + selectedItem.getmGuid());
+        startActivity(goToArticleIntent);
     }
 
-    private class GetHeads extends AsyncTask<String, Void, JSONArray> {
+    // </editor-fold>
 
-        ListView list = (ListView) findViewById(R.id.list);
+    // <editor-fold desc="Fragment Callback Methods">
 
-        // Removes the loading circle for footer and puts the "no more items" TextView
-        LayoutInflater inflater = (LayoutInflater) getApplicationContext().
-                getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        RelativeLayout rl = (RelativeLayout) inflater.inflate(R.layout.loading_panel,
-                (ViewGroup) findViewById(R.id.list),
-                false);
+    @Override
+    public void onDownloadFinish() {
+        if (mFragment.getVisibility() == View.GONE &&
+            !ItemsContent.ITEMS.isEmpty()) {
+            mFragment.setVisibility(View.VISIBLE);
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            // Checks if it's the first time this task is called, so it'll show the
-            // central progress circle
-            if (numOfRequests == 0) {
-                findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+            if (mProgressBar.getVisibility() == View.VISIBLE) {
+                mProgressBar.setVisibility(View.GONE);
             }
-        }
-
-        @Override
-        protected JSONArray doInBackground(String... params) {
-
-            // Currently downloading - so this task won't be called again when already downloading
-            downloading = true;
-
-            //////////////// JUST FOR DEBUG PURPOSES!!!!! ////////////////
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            //////////////// JUST FOR DEBUG PURPOSES!!!!! ////////////////
-
-            // Sending the post request, get the items in the form of JSON
-            String heads = sendPost(params[0], params[1]);
-
-            try {
-                return new JSONArray(heads);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray result) {
-
-            // Parsing the JSON, creating Items for each JSON row
-            for (int index = 0; index < result.length(); index ++) {
-                JSONObject currItem;
-
-                try {
-                    currItem = result.getJSONObject(index);
-
-                    // Adds the item to the main list
-                    ItemsContent.addItem(currItem.getInt("item_guid"),
-                            currItem.getString("item_title"),
-                            currItem.getString("item_desc"),
-                            currItem.getString("img_link"),
-                            currItem.getString("img_desc"),
-                            currItem.getString("item_link"),
-                            currItem.getString("item_date"));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Getting the list adapter so it'll notify the changes and update the list
-            ItemListFragment listFragment = (ItemListFragment) getFragmentManager().
-                                                    findFragmentById(R.id.items_list_fragment);
-            listFragment.getAdapter().notifyDataSetChanged();
-
-            // If it's the first item download just finished - remove the central loading cirecle
-            // and put a loading circle at the footer of the list
-            if (numOfRequests == 0) {
-                // Removes the central loading cirecle
-                findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-
-                // Puts a loading circle at the footer of the list
-                list.addFooterView(rl, null, false);
-            }
-            else if (result.length() == 0) {
-                hasMoreItems = false;
-
-                // Removes the loading circle for footer and puts the "no more items" TextView
-                list.removeFooterView(findViewById(R.id.progress_bar_footer));
-
-                // Adds the no_more_items label to list footer
-                RelativeLayout textLayout = (RelativeLayout) inflater.inflate(R.layout.no_more_items_layout,
-                                                       (ViewGroup) findViewById(R.id.list),
-                                                       false);
-
-                list.addFooterView(textLayout, null, false);
-            }
-
-            numOfRequests++;
-
-            // Finished downloading - it can start this task again
-            downloading = false;
-        }
-
-        private String sendPost(String param, String numOfRequests) {
-            try {
-                // Opening a connection
-                URL url = new URL("http://sportheads.ddns.net/SportheadsService.php");
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-                // Adding request header
-                con.setRequestMethod("POST");
-                con.setRequestProperty("Accept-Language", "en-US,en;q=0.8,he;q=0.6");
-                con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
-                // Adding request body
-                String urlParameters = "serv=" + param + "&nor=" + numOfRequests;
-                con.setDoOutput(true);
-                DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-                wr.writeBytes(urlParameters);
-                wr.flush();
-                wr.close();
-
-                // Getting the response
-                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-
-                in.close();
-
-                return (response.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return null;
         }
     }
 
-    private class ItemScrollListener implements AbsListView.OnScrollListener {
-
-        private int previousTotal = 0;
-        private boolean loading = true;
-
-        public ItemScrollListener() {
-        }
-
-        @Override
-        public void onScroll(AbsListView view, int firstVisibleItem,
-                             int visibleItemCount, int totalItemCount) {
-            // If it was previously loading
-            if (loading) {
-                // Is it not currently downloading and the total item count is bigger than before
-                if (totalItemCount > previousTotal && !downloading) {
-                    loading = false;
-
-                    // Obviously it's not loading anymore
-                    previousTotal = totalItemCount;
-                }
-            }
-
-            // If it's not currently loading and the one before last item is visible
-            if (!loading &&
-                hasMoreItems &&
-                (firstVisibleItem + visibleItemCount) >= (totalItemCount - 1)) {
-                // get new items from server
-                new GetHeads().execute("get_heads", numOfRequests.toString());
-                loading = true;
-            }
-        }
-
-        @Override
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-        }
-    }
+    // </editor-fold>
 }

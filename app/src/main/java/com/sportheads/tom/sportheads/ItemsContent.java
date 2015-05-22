@@ -1,7 +1,5 @@
 package com.sportheads.tom.sportheads;
 
-import android.widget.ListView;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,9 +10,9 @@ import java.util.Map;
  */
 public class ItemsContent {
 
-    public static List<Item> ITEMS = new ArrayList<Item>();
+    public static List<Item> ITEMS = new ArrayList<>();
 
-    public static Map<Integer, Item> ITEM_MAP = new HashMap<Integer, Item>();
+    public static Map<Integer, Item> ITEM_MAP = new HashMap<>();
 
     public static void addItem(int guid,
                                String title,
@@ -26,6 +24,11 @@ public class ItemsContent {
         Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate);
         ITEMS.add(newItem);
         ITEM_MAP.put(newItem.getmGuid(), newItem);
+    }
+
+    public static void eraseAll() {
+        ITEMS.clear();
+        ITEM_MAP.clear();
     }
 
     public static class Item {

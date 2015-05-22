@@ -3,14 +3,18 @@ package com.sportheads.tom.sportheads;
 import android.app.Activity;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A fragment representing a list of Items.
@@ -21,86 +25,90 @@ import android.widget.TextView;
  * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
  * interface.
  */
-public class ItemListFragment extends Fragment implements AbsListView.OnItemClickListener {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-//    private static final String ARG_PARAM1 = "param1";
-//    private static final String ARG_PARAM2 = "param2";
-//
-//    // TODO: Rename and change types of parameters
-//    private String mParam1;
-//    private String mParam2;
+public class ItemListFragment extends Fragment implements AbsListView.OnItemClickListener,
+                                                          GetHeadlinesTask.TaskCallback {
+    // <editor-fold desc="Data Members">
 
     private OnFragmentInteractionListener mListener;
+    private View                          mFragmentView;
+    private AbsListView                   mListView;
+    private ItemListAdapter               mAdapter;
+    private SwipeRefreshLayout            mSwipeRefreshLayout;
+    private HeadlinesFragmentCallback     mCallback;
+    private HeadlineDownloader            mHeadsDownloader;
+    private boolean                       mGotMoreHeads;
+    private boolean                       mCurrentlyDownloading;
 
-    /**
-     * The fragment's ListView/GridView.
-     */
-    private AbsListView mListView;
+    // </editor-fold>
 
-    /**
-     * The Adapter which will be used to populate the ListView/GridView with
-     * Views.
-     */
-    private ItemListAdapter mAdapter;
+    // <editor-fold desc="Interfaces">
 
     // Container Activity must implement this interface
     public interface OnItemSelectedListener {
         public void onItemSelected(int position);
     }
 
-    public ItemListAdapter getAdapter() {
-        return mAdapter;
+    public interface OnFragmentInteractionListener {
+        public void onFragmentInteraction(String id);
     }
 
-    // TODO: Rename and change types of parameters
-    public static ItemListFragment newInstance(String param1, String param2) {
+    public interface HeadlinesFragmentCallback {
+        public void onDownloadFinish();
+    }
+
+    // </editor-fold>
+
+    // <editor-fold desc="Ctors">
+
+    public ItemListFragment() {
+        mHeadsDownloader = new HeadlineDownloader(this);
+        mGotMoreHeads = true;
+        mCurrentlyDownloading = false;
+    }
+
+    public static ItemListFragment newInstance() {
         ItemListFragment fragment = new ItemListFragment();
-//        Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
-//        args.putString(ARG_PARAM2, param2);
-//        fragment.setArguments(args);
+
         return fragment;
     }
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
-    public ItemListFragment() {
-    }
+    // </editor-fold>
+
+    // <editor-fold desc="Class Methods">
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        if (getArguments() != null) {
-//            mParam1 = getArguments().getString(ARG_PARAM1);
-//            mParam2 = getArguments().getString(ARG_PARAM2);
-//        }
-
-        // TODO: Change Adapter to display your content
-//        mAdapter = new ArrayAdapter<DummyContent.DummyItem>(getActivity(),
-//                android.R.layout.simple_list_item_1, android.R.id.text1, DummyContent.ITEMS);
         mAdapter = new ItemListAdapter(getActivity(), R.layout.item_layout, ItemsContent.ITEMS);
+
+        // Retain this fragment across configuration changes
+        setRetainInstance(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_item_list, container, false);
+        mFragmentView = inflater.inflate(R.layout.fragment_item_list, container, false);
 
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(R.id.list);
-        //((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
+        mListView = (AbsListView) mFragmentView.findViewById(R.id.list);
         mListView.setAdapter(mAdapter);
+
+        // Set the loading circle footer
+        ((ListView) mListView).addFooterView(inflater.inflate(R.layout.loading_panel,
+                mListView,
+                false));
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
 
-        return view;
+        initSwipeRefreshLayout();
+
+        initEndlessScrolling();
+
+        return mFragmentView;
     }
 
     @Override
@@ -112,14 +120,50 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+
+        try {
+            mCallback = (HeadlinesFragmentCallback) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement TaskCallback");
+        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        mCallback = null;
     }
 
+    public ItemListAdapter getAdapter() {
+        return mAdapter;
+    }
+
+    public void setEmptyText(CharSequence emptyText) {
+        View emptyView = mListView.getEmptyView();
+
+        if (emptyView instanceof TextView) {
+            ((TextView) emptyView).setText(emptyText);
+        }
+    }
+
+    private void initSwipeRefreshLayout() {
+        // Finds the SwipeRefreshLayout
+        mSwipeRefreshLayout = ((SwipeRefreshLayout)
+                        mFragmentView.findViewById(R.id.swipe_refresh_item_list));
+
+        // Sets an onRefresh listener to it
+        mSwipeRefreshLayout.setOnRefreshListener(new ItemListRefreshListener());
+    }
+
+    private void initEndlessScrolling() {
+        mListView.setOnScrollListener(new ItemScrollListener());
+    }
+
+    // </editor-fold>
+
+    // <editor-fold desc="OnItemClickListener Methods">
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -131,32 +175,134 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
         }
     }
 
-    /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
-     */
-    public void setEmptyText(CharSequence emptyText) {
-        View emptyView = mListView.getEmptyView();
+    // </editor-fold>
 
-        if (emptyView instanceof TextView) {
-            ((TextView) emptyView).setText(emptyText);
+    // <editor-fold desc="GetHeadlinesTask Methods">
+
+    @Override
+    public void onPreExecute() {
+        // Checks if SwipeToRefresh is enabled, so the user won't be able to refresh
+        // multiple times at once
+        if (mSwipeRefreshLayout.isEnabled()) {
+            mSwipeRefreshLayout.setEnabled(false);
         }
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(String id);
+    @Override
+    public void onProgressUpdate(Integer progress) {
+        // Checking and changes accordingly whether currently downloading or not
+        if (progress == 0) {
+            mCurrentlyDownloading = true;
+        }
+        else if (progress == 100) {
+            mCurrentlyDownloading = false;
+        }
     }
 
+    @Override
+    public void onCancelled() {
+
+    }
+
+    @Override
+    public void onPostExecute(JSONArray jsonHeads) {
+        // Parsing the headlines json we got
+        parseHeadlines(jsonHeads);
+
+        // Refreshing the ListView
+        mAdapter.notifyDataSetChanged();
+
+        // Checking if swipe to refresh is currently enabled
+        if (!mSwipeRefreshLayout.isEnabled()) {
+            // Enabling back the swipe to refresh function
+            mSwipeRefreshLayout.setEnabled(true);
+
+            // Checks if the list is currently refreshing
+            if (mSwipeRefreshLayout.isRefreshing()) {
+                // Returns the SwipeToRefresh back to normal (enabling refresh triggering)
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+        }
+
+        // Checks if the list is visible
+        if (mListView.getVisibility() == View.GONE) {
+            mListView.setVisibility(View.VISIBLE);
+        }
+
+        mCallback.onDownloadFinish();
+    }
+
+    @Override
+    public void onNoResults() {
+        mGotMoreHeads = false;
+    }
+
+    private void parseHeadlines(JSONArray jsonHeads) {
+        // Parsing the JSON, creating Items for each JSON row
+        for (int index = 0; index < jsonHeads.length(); index ++) {
+            JSONObject currItem;
+
+            try {
+                currItem = jsonHeads.getJSONObject(index);
+
+                // Adds the item to the main list
+                ItemsContent.addItem(currItem.getInt("item_guid"),
+                        currItem.getString("item_title"),
+                        currItem.getString("item_desc"),
+                        currItem.getString("img_link"),
+                        currItem.getString("img_desc"),
+                        currItem.getString("item_link"),
+                        currItem.getString("item_date"));
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // </editor-fold>
+
+    // <editor-fold desc="Swipe To Refresh">
+
+    private class ItemListRefreshListener implements SwipeRefreshLayout.OnRefreshListener {
+
+        @Override
+        public void onRefresh() {
+            resetAll();
+            mListView.setVisibility(View.GONE);
+            //mHeadsDownloader.getNextHeadlines();
+            //mAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void resetAll() {
+        mHeadsDownloader.reset();
+        ItemsContent.eraseAll();
+    }
+
+    // </editor-fold>
+
+    // <editor-fold desc="Endless Scrolling">
+
+    private class ItemScrollListener implements AbsListView.OnScrollListener {
+
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem,
+                             int visibleItemCount, int totalItemCount) {
+            // Checking if the item before last in the list is visible, if it's not currently
+            // downloading and if it's still got more headlines to download
+            if ((firstVisibleItem + visibleItemCount) >= (totalItemCount - 1) &&
+                    !mCurrentlyDownloading &&
+                    mGotMoreHeads) {
+                // Downloading more headlines
+                mHeadsDownloader.getNextHeadlines();
+            }
+        }
+
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
+        }
+    }
+
+    // </editor-fold>
 }
