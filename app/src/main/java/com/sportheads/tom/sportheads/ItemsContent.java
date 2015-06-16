@@ -1,6 +1,10 @@
 package com.sportheads.tom.sportheads;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +24,11 @@ public class ItemsContent {
                                String imageLink,
                                String imageDesc,
                                String link,
-                               String pubDate,
+                               Date   pubDate,
                                String enteredDate) {
         Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate, enteredDate);
         ITEMS.add(newItem);
+        Collections.sort(ITEMS, new PublishDateComparator());
         ITEM_MAP.put(newItem.getmGuid(), newItem);
     }
 
@@ -40,7 +45,7 @@ public class ItemsContent {
         private String mImageLink;
         private String mImageDesc;
         private String mLink;
-        private String mPubDate;
+        private Date   mPubDate;
         private String mEnteredDate;
 
         public Item(int guid,
@@ -49,7 +54,7 @@ public class ItemsContent {
                     String imageLink,
                     String imageDesc,
                     String link,
-                    String pubDate,
+                    Date   pubDate,
                     String enteredDate) {
             this.mGuid = guid;
             this.mTitle = title;
@@ -81,7 +86,7 @@ public class ItemsContent {
             return mLink;
         }
 
-        public String getmPubDate() {
+        public Date getmPubDate() {
             return mPubDate;
         }
 
@@ -93,4 +98,35 @@ public class ItemsContent {
             return mEnteredDate;
         }
     }
+
+    //region Comparator
+
+    public static class PublishDateComparator implements Comparator<Item> {
+        /**
+         * Compares the two specified objects to determine their relative ordering. The ordering
+         * implied by the return value of this method for all possible pairs of
+         * {@code (lhs, rhs)} should form an <i>equivalence relation</i>.
+         * This means that
+         * <ul>
+         * <li>{@code compare(a,a)} returns zero for all {@code a}</li>
+         * <li>the sign of {@code compare(a,b)} must be the opposite of the sign of {@code
+         * compare(b,a)} for all pairs of (a,b)</li>
+         * <li>From {@code compare(a,b) > 0} and {@code compare(b,c) > 0} it must
+         * follow {@code compare(a,c) > 0} for all possible combinations of {@code
+         * (a,b,c)}</li>
+         * </ul>
+         *
+         * @param firstItem an {@code Object}.
+         * @param secondItem a second {@code Object} to compare with {@code firstItem}.
+         * @return an integer < 0 if {@code firstItem} is less than {@code secondItem}, 0 if they are
+         * equal, and > 0 if {@code firstItem} is greater than {@code secondItem}.
+         * @throws ClassCastException if objects are not of the correct type.
+         */
+        @Override
+        public int compare(Item firstItem, Item secondItem) {
+            return secondItem.getmPubDate().compareTo(firstItem.getmPubDate());
+        }
+    }
+
+    //endregion
 }

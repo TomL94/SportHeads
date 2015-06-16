@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 
+import java.text.DateFormat;
 import java.util.List;
 
 /**
@@ -36,7 +37,8 @@ public class ItemListAdapter extends ArrayAdapter<ItemsContent.Item> {
                 .setText(ItemsContent.ITEMS.get(position).getmDesc());
 
         ((TextView) (convertView.findViewById(R.id.item_date)))
-                .setText(ItemsContent.ITEMS.get(position).getmPubDate());
+                .setText(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+                        .format(ItemsContent.ITEMS.get(position).getmPubDate()));
 
         ImageLoader.getInstance().displayImage(ItemsContent.ITEMS.get(position).getmImageLink(),
                 (ImageView) (convertView.findViewById(R.id.item_image)));

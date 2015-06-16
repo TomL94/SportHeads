@@ -16,6 +16,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+
 /**
  * A fragment representing a list of Items.
  * <p/>
@@ -246,14 +249,18 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
                 currItem = jsonHeads.getJSONObject(index);
 
                 // Adds the item to the main list
-                ItemsContent.addItem(currItem.getInt("item_guid"),
-                        currItem.getString("item_title"),
-                        currItem.getString("item_desc"),
-                        currItem.getString("img_link"),
-                        currItem.getString("img_desc"),
-                        currItem.getString("item_link"),
-                        currItem.getString("item_date"),
-                        currItem.getString("date_entered"));
+                try {
+                    ItemsContent.addItem(currItem.getInt("item_guid"),
+                            currItem.getString("item_title"),
+                            currItem.getString("item_desc"),
+                            currItem.getString("img_link"),
+                            currItem.getString("img_desc"),
+                            currItem.getString("item_link"),
+                            DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).parse(currItem.getString("format_item_date")),
+                            currItem.getString("date_entered"));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
             catch (JSONException e) {
                 e.printStackTrace();
