@@ -68,8 +68,8 @@ public class BaseActivity extends ActionBarActivity
     private void initImageLoader() {
         DisplayImageOptions displayOptions = new DisplayImageOptions.Builder().
                 cacheInMemory(true).
-                imageScaleType(ImageScaleType.EXACTLY_STRETCHED).
                 showImageOnLoading(R.mipmap.trans_block).
+                imageScaleType(ImageScaleType.EXACTLY_STRETCHED).
                 displayer(new FadeInBitmapDisplayer(600)).build();
         ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).
                 defaultDisplayImageOptions(displayOptions).build();

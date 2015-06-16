@@ -252,7 +252,8 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
                         currItem.getString("img_link"),
                         currItem.getString("img_desc"),
                         currItem.getString("item_link"),
-                        currItem.getString("item_date"));
+                        currItem.getString("item_date"),
+                        currItem.getString("date_entered"));
             }
             catch (JSONException e) {
                 e.printStackTrace();

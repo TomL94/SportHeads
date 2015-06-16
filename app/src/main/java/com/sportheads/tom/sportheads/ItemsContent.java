@@ -20,8 +20,9 @@ public class ItemsContent {
                                String imageLink,
                                String imageDesc,
                                String link,
-                               String pubDate) {
-        Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate);
+                               String pubDate,
+                               String enteredDate) {
+        Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate, enteredDate);
         ITEMS.add(newItem);
         ITEM_MAP.put(newItem.getmGuid(), newItem);
     }
@@ -40,6 +41,7 @@ public class ItemsContent {
         private String mImageDesc;
         private String mLink;
         private String mPubDate;
+        private String mEnteredDate;
 
         public Item(int guid,
                     String title,
@@ -47,7 +49,8 @@ public class ItemsContent {
                     String imageLink,
                     String imageDesc,
                     String link,
-                    String pubDate) {
+                    String pubDate,
+                    String enteredDate) {
             this.mGuid = guid;
             this.mTitle = title;
             this.mDesc = desc;
@@ -55,6 +58,7 @@ public class ItemsContent {
             this.mImageDesc = imageDesc;
             this.mLink = link;
             this.mPubDate = pubDate;
+            this.mEnteredDate = enteredDate;
         }
 
         public int getmGuid() {
@@ -83,6 +87,10 @@ public class ItemsContent {
 
         public String getmTitle() {
             return mTitle;
+        }
+
+        public String getmEnteredDate() {
+            return mEnteredDate;
         }
     }
 }
