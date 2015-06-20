@@ -26,10 +26,9 @@ public class ItemsContent {
                                String link,
                                Date   pubDate,
                                Date   enteredDate) {
-        // TODO: Already exist? delete the old one
         Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate, enteredDate);
 
-        // If the Item already exists
+        // If the Item already exists - remove it
         if (ITEM_MAP.containsKey(newItem.getmGuid())) {
             ITEMS.remove(ITEM_MAP.get(newItem.getmGuid()));
             ITEM_MAP.remove(newItem.getmGuid());

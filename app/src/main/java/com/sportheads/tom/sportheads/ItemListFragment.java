@@ -3,6 +3,7 @@ package com.sportheads.tom.sportheads;
 import android.app.Activity;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -213,7 +214,9 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
     public void onPostExecute(JSONArray jsonHeads, GetHeadlinesTask.RequestType requestType) {
         // Parsing the headlines json we got
         if (parseHeadlines(jsonHeads) == 0 && requestType == GetHeadlinesTask.RequestType.getNewHeadlines) {
-            Toast.makeText(getActivity(), "Everything is up to date", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), "Everything is up to date", Toast.LENGTH_SHORT).show();
+            // TODO: Put this string to resources
+            Snackbar.make(mListView, "Everything is up to date.", Snackbar.LENGTH_SHORT).show();
         } else {
             // Refreshing the ListView
             mAdapter.notifyDataSetChanged();
@@ -237,6 +240,7 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 //        }
 
         mCallback.onDownloadFinish();
+        //mCurrentlyDownloading = false;
     }
 
     @Override
@@ -288,6 +292,7 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
             String help = mostRecentDate.substring(4, 7);
             mostRecentDate = help.substring(1) + "/" + mostRecentDate.replace(help, "");
             mHeadsDownloader.getNewHeadlines(mostRecentDate);
+            //mCurrentlyDownloading = true;
             //String c = b.substring(1) + "/" + a;
             //mHeadsDownloader.getNextHeadlines();
             //mAdapter.notifyDataSetChanged();
@@ -315,6 +320,7 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
                     mGotMoreHeads) {
                 // Downloading more headlines
                 mHeadsDownloader.getNextHeadlines();
+                //mCurrentlyDownloading = true;
             }
         }
 

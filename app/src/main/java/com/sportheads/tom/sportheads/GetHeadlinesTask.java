@@ -70,11 +70,11 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
         // Getting the headlines from the web service
         String jsonHeads = sendPost(params[0], params[1]);
         ////////////////////////////////////FOR DEBUG///////////////////////////////////////////////
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(3000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         ////////////////////////////////////FOR DEBUG///////////////////////////////////////////////
         try {
             return new JSONArray(jsonHeads);
