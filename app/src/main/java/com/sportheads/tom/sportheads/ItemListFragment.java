@@ -213,31 +213,31 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
     public void onPostExecute(JSONArray jsonHeads, GetHeadlinesTask.RequestType requestType) {
         // Parsing the headlines json we got
         if (parseHeadlines(jsonHeads) == 0 && requestType == GetHeadlinesTask.RequestType.getNewHeadlines) {
-            Toast.makeText(this.getActivity(), "Everything is up to date", Toast.LENGTH_SHORT);
+            Toast.makeText(getActivity(), "Everything is up to date", Toast.LENGTH_SHORT).show();
         } else {
             // Refreshing the ListView
             mAdapter.notifyDataSetChanged();
+        }
 
-            // Checking if swipe to refresh is currently enabled
-            if (!mSwipeRefreshLayout.isEnabled()) {
-                // Enabling back the swipe to refresh function
-                mSwipeRefreshLayout.setEnabled(true);
+        // Checking if swipe to refresh is currently enabled
+        if (!mSwipeRefreshLayout.isEnabled()) {
+            // Enabling back the swipe to refresh function
+            mSwipeRefreshLayout.setEnabled(true);
 
-                // Checks if the list is currently refreshing
-                if (mSwipeRefreshLayout.isRefreshing()) {
-                    // Returns the SwipeToRefresh back to normal (enabling refresh triggering)
-                    mSwipeRefreshLayout.setRefreshing(false);
-                }
+            // Checks if the list is currently refreshing
+            if (mSwipeRefreshLayout.isRefreshing()) {
+                // Returns the SwipeToRefresh back to normal (enabling refresh triggering)
+                mSwipeRefreshLayout.setRefreshing(false);
             }
+        }
 
 //        // Checks if the list is visible
 //        if (mListView.getVisibility() == View.GONE) {
 //            mListView.setVisibility(View.VISIBLE);
 //        }
 
-            // TODO: Check on that
-            mCallback.onDownloadFinish();
-        }
+        // TODO: Check on that
+        mCallback.onDownloadFinish();
     }
 
     @Override
