@@ -25,7 +25,8 @@ public class ItemsContent {
                                String imageDesc,
                                String link,
                                Date   pubDate,
-                               String enteredDate) {
+                               Date   enteredDate) {
+        // TODO: Already exist? delete the old one
         Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate, enteredDate);
         ITEMS.add(newItem);
         Collections.sort(ITEMS, new PublishDateComparator());
@@ -46,7 +47,7 @@ public class ItemsContent {
         private String mImageDesc;
         private String mLink;
         private Date   mPubDate;
-        private String mEnteredDate;
+        private Date   mEnteredDate;
 
         public Item(int guid,
                     String title,
@@ -55,7 +56,7 @@ public class ItemsContent {
                     String imageDesc,
                     String link,
                     Date   pubDate,
-                    String enteredDate) {
+                    Date   enteredDate) {
             this.mGuid = guid;
             this.mTitle = title;
             this.mDesc = desc;
@@ -66,7 +67,7 @@ public class ItemsContent {
             this.mEnteredDate = enteredDate;
         }
 
-        public int getmGuid() {
+        public int    getmGuid() {
             return mGuid;
         }
 
@@ -86,7 +87,7 @@ public class ItemsContent {
             return mLink;
         }
 
-        public Date getmPubDate() {
+        public Date   getmPubDate() {
             return mPubDate;
         }
 
@@ -94,7 +95,7 @@ public class ItemsContent {
             return mTitle;
         }
 
-        public String getmEnteredDate() {
+        public Date   getmEnteredDate() {
             return mEnteredDate;
         }
     }
@@ -124,7 +125,7 @@ public class ItemsContent {
          */
         @Override
         public int compare(Item firstItem, Item secondItem) {
-            return secondItem.getmPubDate().compareTo(firstItem.getmPubDate());
+            return secondItem.getmEnteredDate().compareTo(firstItem.getmEnteredDate());
         }
     }
 

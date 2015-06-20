@@ -24,20 +24,31 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
     private final String ACCEPT_LANG              = "en-US,en;q=0.8,he;q=0.6";
     private final String CONTENT_TYPE             = "application/x-www-form-urlencoded";
     private final String SERVICE_NAME_PARAM       = "serv";
-    private final String SERVICE_NUM_OF_REQ_PARAM = "nor";
+    private final String SERVICE_EXTRA_PARAM      = "sec_param";
 
     // </editor-fold>
+
+    //region Enums
+
+    public static enum RequestType {
+        getMoreHeadlines,
+        getNewHeadlines
+    }
+
+    //endregion
 
     // <editor-fold desc="Data Members">
 
     private TaskCallback mCallback;
+    private RequestType  mRequestType;
 
     // </editor-fold>
 
     // <editor-fold desc="Ctors">
 
-    public GetHeadlinesTask (TaskCallback callback) {
+    public GetHeadlinesTask (TaskCallback callback, RequestType type) {
         mCallback = callback;
+        mRequestType = type;
     }
 
     // </editor-fold>
@@ -84,14 +95,14 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
     @Override
     protected void onPostExecute(JSONArray jsonHeads) {
         if (mCallback != null) {
-            mCallback.onPostExecute(jsonHeads);
+            mCallback.onPostExecute(jsonHeads, mRequestType);
         }
 
         // Publishes progress of 100% (end of downloading)
         publishProgress(100);
     }
 
-    private String sendPost(String serviceName, String numOfRequests) {
+    private String sendPost(String serviceName, String extraParam) {
         try {
             // Opening a connection
             URL url = new URL(SERVICE_URL);
@@ -104,7 +115,7 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
 
             // Adding request body
             String urlParameters = SERVICE_NAME_PARAM + "=" + serviceName + "&" +
-                                   SERVICE_NUM_OF_REQ_PARAM + "=" + numOfRequests;
+                                   SERVICE_EXTRA_PARAM + "=" + extraParam;
             con.setDoOutput(true);
             DataOutputStream wr = new DataOutputStream(con.getOutputStream());
             wr.writeBytes(urlParameters);
@@ -137,7 +148,7 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
     public interface TaskCallback {
         void onPreExecute();
         void onCancelled();
-        void onPostExecute(JSONArray jsonHeads);
+        void onPostExecute(JSONArray jsonHeads, RequestType requestType);
         void onProgressUpdate(Integer progress);
         void onNoResults();
     }

@@ -93,7 +93,8 @@ public class BaseActivity extends ActionBarActivity
     // <editor-fold desc="Fragment Callback Methods">
 
     @Override
-    public void onDownloadFinish() {
+    public void
+    onDownloadFinish() {
         if (mFragment.getVisibility() == View.GONE &&
             !ItemsContent.ITEMS.isEmpty()) {
             mFragment.setVisibility(View.VISIBLE);

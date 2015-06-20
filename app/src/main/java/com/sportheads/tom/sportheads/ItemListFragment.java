@@ -11,6 +11,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +19,7 @@ import org.json.JSONObject;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.TooManyListenersException;
 
 /**
  * A fragment representing a list of Items.
@@ -208,31 +210,34 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
     }
 
     @Override
-    public void onPostExecute(JSONArray jsonHeads) {
+    public void onPostExecute(JSONArray jsonHeads, GetHeadlinesTask.RequestType requestType) {
         // Parsing the headlines json we got
-        parseHeadlines(jsonHeads);
+        if (parseHeadlines(jsonHeads) == 0 && requestType == GetHeadlinesTask.RequestType.getNewHeadlines) {
+            Toast.makeText(this.getActivity(), "Everything is up to date", Toast.LENGTH_SHORT);
+        } else {
+            // Refreshing the ListView
+            mAdapter.notifyDataSetChanged();
 
-        // Refreshing the ListView
-        mAdapter.notifyDataSetChanged();
+            // Checking if swipe to refresh is currently enabled
+            if (!mSwipeRefreshLayout.isEnabled()) {
+                // Enabling back the swipe to refresh function
+                mSwipeRefreshLayout.setEnabled(true);
 
-        // Checking if swipe to refresh is currently enabled
-        if (!mSwipeRefreshLayout.isEnabled()) {
-            // Enabling back the swipe to refresh function
-            mSwipeRefreshLayout.setEnabled(true);
-
-            // Checks if the list is currently refreshing
-            if (mSwipeRefreshLayout.isRefreshing()) {
-                // Returns the SwipeToRefresh back to normal (enabling refresh triggering)
-                mSwipeRefreshLayout.setRefreshing(false);
+                // Checks if the list is currently refreshing
+                if (mSwipeRefreshLayout.isRefreshing()) {
+                    // Returns the SwipeToRefresh back to normal (enabling refresh triggering)
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
             }
-        }
 
-        // Checks if the list is visible
-        if (mListView.getVisibility() == View.GONE) {
-            mListView.setVisibility(View.VISIBLE);
-        }
+//        // Checks if the list is visible
+//        if (mListView.getVisibility() == View.GONE) {
+//            mListView.setVisibility(View.VISIBLE);
+//        }
 
-        mCallback.onDownloadFinish();
+            // TODO: Check on that
+            mCallback.onDownloadFinish();
+        }
     }
 
     @Override
@@ -240,7 +245,7 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
         mGotMoreHeads = false;
     }
 
-    private void parseHeadlines(JSONArray jsonHeads) {
+    private int parseHeadlines(JSONArray jsonHeads) {
         // Parsing the JSON, creating Items for each JSON row
         for (int index = 0; index < jsonHeads.length(); index ++) {
             JSONObject currItem;
@@ -257,7 +262,7 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
                             currItem.getString("img_desc"),
                             currItem.getString("item_link"),
                             DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).parse(currItem.getString("format_item_date")),
-                            currItem.getString("date_entered"));
+                            DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).parse(currItem.getString("format_date_entered")));
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -266,6 +271,8 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
                 e.printStackTrace();
             }
         }
+
+        return jsonHeads.length();
     }
 
     // </editor-fold>
@@ -276,8 +283,14 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 
         @Override
         public void onRefresh() {
-            resetAll();
-            mListView.setVisibility(View.GONE);
+            //resetAll();
+            //mListView.setVisibility(View.GONE);
+            // TODO: Call to the Downloader func
+            String mostRecentDate = DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.MEDIUM).format(mAdapter.getItem(0).getmEnteredDate());
+            String help = mostRecentDate.substring(4, 7);
+            mostRecentDate = help.substring(1) + "/" + mostRecentDate.replace(help, "");
+            mHeadsDownloader.getNewHeadlines(mostRecentDate);
+            //String c = b.substring(1) + "/" + a;
             //mHeadsDownloader.getNextHeadlines();
             //mAdapter.notifyDataSetChanged();
         }

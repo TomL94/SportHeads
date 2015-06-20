@@ -9,7 +9,8 @@ public class HeadlineDownloader {
 
     // <editor-fold desc="Final Members">
 
-    final String SERVICE_NAME = "get_heads";
+    final String GET_HEADS_SERVICE_NAME = "get_heads";
+    final String GET_NEW_HEADS_SERVICE_NAME = "get_new_items";
 
     // </editor-fold>
 
@@ -40,11 +41,22 @@ public class HeadlineDownloader {
         }
 
         // Starting the downloading task
-        mDownTask = new GetHeadlinesTask(mClient);
-        mDownTask.execute(SERVICE_NAME, mNumOfRequests.toString());
+        mDownTask = new GetHeadlinesTask(mClient, GetHeadlinesTask.RequestType.getMoreHeadlines);
+        mDownTask.execute(GET_HEADS_SERVICE_NAME, mNumOfRequests.toString());
 
         // Increments the requests counter
         mNumOfRequests++;
+    }
+
+    public void getNewHeadlines(String latestDate) {
+        // Cancelling currently running task
+        if ((mDownTask != null) &&
+                (mDownTask.getStatus() != AsyncTask.Status.FINISHED)) {
+            mDownTask.cancel(false);
+        }
+
+        mDownTask = new GetHeadlinesTask(mClient, GetHeadlinesTask.RequestType.getNewHeadlines);
+        mDownTask.execute(GET_NEW_HEADS_SERVICE_NAME, latestDate);
     }
 
     public void reset() {
