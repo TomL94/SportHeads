@@ -28,6 +28,13 @@ public class ItemsContent {
                                Date   enteredDate) {
         // TODO: Already exist? delete the old one
         Item newItem = new Item(guid, title, desc, imageLink, imageDesc, link, pubDate, enteredDate);
+
+        // If the Item already exists
+        if (ITEM_MAP.containsKey(newItem.getmGuid())) {
+            ITEMS.remove(ITEM_MAP.get(newItem.getmGuid()));
+            ITEM_MAP.remove(newItem.getmGuid());
+        }
+
         ITEMS.add(newItem);
         Collections.sort(ITEMS, new PublishDateComparator());
         ITEM_MAP.put(newItem.getmGuid(), newItem);

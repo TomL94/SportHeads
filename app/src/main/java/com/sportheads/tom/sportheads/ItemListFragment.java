@@ -236,7 +236,6 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 //            mListView.setVisibility(View.VISIBLE);
 //        }
 
-        // TODO: Check on that
         mCallback.onDownloadFinish();
     }
 
@@ -285,7 +284,6 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
         public void onRefresh() {
             //resetAll();
             //mListView.setVisibility(View.GONE);
-            // TODO: Call to the Downloader func
             String mostRecentDate = DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.MEDIUM).format(mAdapter.getItem(0).getmEnteredDate());
             String help = mostRecentDate.substring(4, 7);
             mostRecentDate = help.substring(1) + "/" + mostRecentDate.replace(help, "");
