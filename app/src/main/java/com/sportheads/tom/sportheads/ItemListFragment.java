@@ -20,6 +20,7 @@ import org.json.JSONObject;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.TooManyListenersException;
 
 /**
@@ -286,16 +287,10 @@ public class ItemListFragment extends Fragment implements AbsListView.OnItemClic
 
         @Override
         public void onRefresh() {
-            //resetAll();
-            //mListView.setVisibility(View.GONE);
-            String mostRecentDate = DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.MEDIUM).format(mAdapter.getItem(0).getmEnteredDate());
-            String help = mostRecentDate.substring(4, 7);
-            mostRecentDate = help.substring(1) + "/" + mostRecentDate.replace(help, "");
+            SimpleDateFormat mySqlDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String mostRecentDate = mySqlDateFormat.format(mAdapter.getItem(0).getmEnteredDate());
+
             mHeadsDownloader.getNewHeadlines(mostRecentDate);
-            //mCurrentlyDownloading = true;
-            //String c = b.substring(1) + "/" + a;
-            //mHeadsDownloader.getNextHeadlines();
-            //mAdapter.notifyDataSetChanged();
         }
     }
 
