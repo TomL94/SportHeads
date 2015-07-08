@@ -18,8 +18,8 @@ public class GetHeadlinesTask extends AsyncTask<String, Integer, JSONArray> {
 
     // <editor-fold desc="Final Members">
 
-    //private final String SERVICE_URL              = "http://sportheads.ddns.net/SportheadsService.php";
-    private final String SERVICE_URL              = "http://10.0.0.5/SportheadsService.php";
+    private final String SERVICE_URL              = "http://sportheads.ddns.net/SportheadsService.php";
+    //private final String SERVICE_URL              = "http://10.0.0.5/SportheadsService.php";
     private final String REQ_METHOD               = "POST";
     private final String ACCEPT_LANG              = "en-US,en;q=0.8,he;q=0.6";
     private final String CONTENT_TYPE             = "application/x-www-form-urlencoded";
